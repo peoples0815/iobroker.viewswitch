@@ -87,25 +87,105 @@ function startAdapter(options) {
     }));
 }
 
+function readViews() { 
+    let project = 'Wandtablet';
+    let viewList;
+    let configPath = '/opt/iobroker/iobroker-data/files/vis.0/' +project+'/vis-views.jsonn';
+    if (fs.existsSync(configPath)) 
+    {
+        viewList = Object.keys(JSON.parse(fs.readFileSync(configPath, 'utf8')));
+        
+        //let data = fs.readFileSync(configPath, 'utf8');
+        //arr = Object.keys(JSON.parse(data)); 
+        viewList.shift();
+        return(viewList);
+    } else {
+        adapter.log.error('Cannot find /opt/iobroker/iobroker-data/files/vis.0/' +project+'/vis-views.json');
+    }
+}
+
+
 async function main() {
+    if(readViews())adapter.log.info(readViews());
 
     // The adapters config (in the instance object everything under the attribute "native") is accessible via
     // adapter.config:
     adapter.log.info('config option1: ' + adapter.config.option1);
     adapter.log.info('config option2: ' + adapter.config.option2);
-
+    
     /*
         For every state in the system there has to be also an object of type state
         Here a simple template for a boolean variable named "testVariable"
         Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
     */
-    await adapter.setObjectNotExistsAsync('testVariable', {
+    await adapter.setObjectNotExistsAsync('actualHomeView', {
         type: 'state',
         common: {
-            name: 'testVariable',
-            type: 'boolean',
+            name: 'View what is set as Home',
+            type: 'string',
             role: 'indicator',
             read: true,
+            write: true,
+        },
+        native: {},
+    });
+    await adapter.setObjectNotExistsAsync('actualLockView', {
+        type: 'state',
+        common: {
+            name: 'View what is set as Lockview',
+            type: 'string',
+            def:  false,
+            role: 'switch',
+            read: true,
+            write: true,
+        },
+        native: {},
+    });
+    await adapter.setObjectNotExistsAsync('lockViewActive', {
+        type: 'state',
+        common: {
+            name: 'Forces Lockview to be shown',
+            type: 'boolean',
+            def:  false,
+            role: 'switch',
+            read: true,
+            write: true,
+        },
+        native: {},
+    });
+    await adapter.setObjectNotExistsAsync('switchAutomatic', {
+        type: 'state',
+        common: {
+            name: 'Automatic change Views',
+            type: 'boolean',
+            def:  false,
+            role: 'switch',
+            read: true,
+            write: true,
+        },
+        native: {},
+    });
+    await adapter.setObjectNotExistsAsync('switchAutomaticTimer', {
+        type: 'state',
+        common: {
+            name: 'Timer for automatic View Change',
+            type: 'number',
+            role: 'indicator',
+            read: true,
+            unit: 's',
+            write: true,
+           
+        },
+        native: {},
+    });
+    await adapter.setObjectNotExistsAsync('switchTimer', {
+        type: 'state',
+        common: {
+            name: 'Time to show actual View',
+            type: 'number',
+            role: 'indicator',
+            read: true,
+            unit: 's',
             write: true,
         },
         native: {},
@@ -141,6 +221,9 @@ async function main() {
         adapter.log.info('check group user admin group admin: ' + res);
     });
 }
+
+
+
 
 // @ts-ignore parent is a valid property on module
 if (module.parent) {

@@ -16,18 +16,18 @@
                 "zh-cn": "首次出版"
             }
         },
-        "title": "Switch your Vis View automaticly",
+        "title": "SwitchView",
         "titleLang": {
-            "en": "Switch your Vis View automaticly",
-            "de": "Schalten Sie Ihre Vis-Ansicht automatisch um",
-            "ru": "Автоматическое переключение вида Vis View",
-            "pt": "Mude seu Vis View automaticamente",
-            "nl": "Schakel automatisch uw Vis-weergave",
-            "fr": "Changez votre Vis View automatiquement",
-            "it": "Cambia automaticamente la visualizzazione Vis",
-            "es": "Cambia tu Vis View automáticamente",
-            "pl": "Przełącz widok Vis automatycznie",
-            "zh-cn": "自动切换您的Vis View"
+            "en": "SwitchView",
+            "de": "SwitchView",
+            "ru": "SwitchView",
+            "pt": "SwitchView",
+            "nl": "SwitchView",
+            "fr": "SwitchView",
+            "it": "SwitchView",
+            "es": "SwitchView",
+            "pl": "SwitchView",
+            "zh-cn": "SwitchView"
         },
         "desc": {
             "en": "This Adapter allows you to switch your existing Views automaticly",
