@@ -1,0 +1,93 @@
+{
+    "common": {
+        "name": "viewswitch",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "Switch your Vis View automaticly",
+        "titleLang": {
+            "en": "Switch your Vis View automaticly",
+            "de": "Schalten Sie Ihre Vis-Ansicht automatisch um",
+            "ru": "Автоматическое переключение вида Vis View",
+            "pt": "Mude seu Vis View automaticamente",
+            "nl": "Schakel automatisch uw Vis-weergave",
+            "fr": "Changez votre Vis View automatiquement",
+            "it": "Cambia automaticamente la visualizzazione Vis",
+            "es": "Cambia tu Vis View automáticamente",
+            "pl": "Przełącz widok Vis automatycznie",
+            "zh-cn": "自动切换您的Vis View"
+        },
+        "desc": {
+            "en": "This Adapter allows you to switch your existing Views automaticly",
+            "de": "Mit diesem Adapter können Sie Ihre vorhandenen Ansichten automatisch wechseln",
+            "ru": "Этот адаптер позволяет автоматически переключать существующие представления",
+            "pt": "Este adaptador permite que você alterne suas visualizações existentes automaticamente",
+            "nl": "Met deze adapter kunt u uw bestaande weergaven automatisch omschakelen",
+            "fr": "Cet adaptateur vous permet de changer automatiquement vos vues existantes",
+            "it": "Questo adattatore ti consente di cambiare automaticamente le viste esistenti",
+            "es": "Este adaptador le permite cambiar sus vistas existentes automáticamente",
+            "pl": "Ten adapter umożliwia automatyczne przełączanie istniejących widoków",
+            "zh-cn": "此适配器使您可以自动切换现有视图"
+        },
+        "authors": [
+            "Peoples <peoples0815github@gmail.com>"
+        ],
+        "keywords": [
+            "Vis"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "viewswitch.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/peoples0815/ioBroker.viewswitch/master/admin/viewswitch.png",
+        "readme": "https://github.com/peoples0815/ioBroker.viewswitch/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "visualization",
+        "compact": true,
+        "materialize": true,
+        "materializeTab": true,
+        "adminTab": {
+            "singleton": true,
+            "name": {
+                "en": "Switch your Vis View automaticly",
+                "de": "Schalten Sie Ihre Vis-Ansicht automatisch um",
+                "ru": "Автоматическое переключение вида Vis View",
+                "pt": "Mude seu Vis View automaticamente",
+                "nl": "Schakel automatisch uw Vis-weergave",
+                "fr": "Changez votre Vis View automatiquement",
+                "it": "Cambia automaticamente la visualizzazione Vis",
+                "es": "Cambia tu Vis View automáticamente",
+                "pl": "Przełącz widok Vis automatycznie",
+                "zh-cn": "自动切换您的Vis View"
+            },
+            "link": "",
+            "fa-icon": "info"
+        },
+        "supportCustoms": true,
+        "dependencies": [
+            {
+                "js-controller": ">=1.4.2"
+            }
+        ]
+    },
+    "native": {
+        "option1": true,
+        "option2": "42"
+    },
+    "objects": [],
+    "instanceObjects": []
+}
