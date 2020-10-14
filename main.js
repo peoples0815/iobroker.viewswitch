@@ -103,6 +103,7 @@ let viewFolder = 'Views.';
 
 
 function createObjects(arr){
+    let i = 0;
     arr.forEach(function(view) {
         adapter.setObjectNotExistsAsync(viewFolder + view + '.showIAV', {
             type: 'state',
@@ -147,14 +148,14 @@ function createObjects(arr){
             common: {
                 name: 'Homeview of Project',
                 type: 'boolean',
-                def:  false,
+                def:  i===0?true:false,
                 role: 'indicator',
                 read: true,
                 write: true,
             },
             native: {},
         });
-            
+    i++;        
     });
     
     adapter.setObjectNotExistsAsync('actualHomeView', {
@@ -247,6 +248,7 @@ function readViews() {
     }
 }
 
+
 // Intercept and categorize changes
 function checkChanges(obj,newState) {
     let viewArr = readViews();
@@ -292,7 +294,7 @@ function checkChanges(obj,newState) {
             } else {
                 if(state.val === true){
 //Timeout prüfen?
-//                    if(timerTout) clearTimeout(timerTout);
+                    if(timerTout) clearTimeout(timerTout);
                     adapter.setState('switchTimer', 0);
                     adapter.getState('actualLockView', (err, state) => {
                         if (!state || state.val === null) {
@@ -305,9 +307,9 @@ function checkChanges(obj,newState) {
                     });
                 } else {
 //Timeout prüfen?
-//                  if(timerTout) clearTimeout(timerTout);
+                    if(timerTout) clearTimeout(timerTout);
                     adapter.setState('switchTimer', 0);
-                    adapter.getState('Views.' + newState.split('/').pop() + '.sWSec', (err, state) => {
+                    adapter.getState(viewFolder + newState.split('/').pop() + '.sWSec', (err, state) => {
                         if (!state || state.val === null) {
                             adapter.log.error('Error bei getting Value of sWSec');
                         } else {
@@ -350,8 +352,29 @@ function switchToHomeView() {
             } else {
                 let timer = parseInt(state.val, 10);
                 if (timer > 1) {
-                    adapter.setState('switchTimer',timer - 1);
-                    switchToHomeView();
+                    adapter.getState('lockViewActive', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of lockViewActive');
+                            } else {
+                                if(state.val === true){
+                //Timeout prüfen?
+                                    if(timerTout) clearTimeout(timerTout);
+                                    adapter.setState('switchTimer', 0);
+                                    adapter.getState('actualLockView', (err, state) => {
+                                        if (!state || state.val === null) {
+                                            adapter.log.error('Error bei getting Value of actualLockView');
+                                        } else {
+                                            if(state.val != newState.split('/').pop()){
+                                                switchToViewImmediate(project+'/'+state.val);
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    adapter.setState('switchTimer',timer - 1);
+                                    switchToHomeView(); 
+                                }
+                            }
+                    });
                 }
                 else{
                     adapter.setState('switchTimer', 0);
@@ -389,7 +412,7 @@ function changeLockView(arr,activeLockView){
             adapter.setState('actualLockView', activeLockView);
         }
         else{
-            adapter.setState('Views.'+ view +'.isLockView',  false);
+            adapter.setState(viewFolder + view +'.isLockView',  false);
         }   
     });
 }
@@ -401,7 +424,7 @@ function changeHomeView(arr,activeHomeView){
             adapter.setState('actualHomeView', activeHomeView);
         }
         else{
-            adapter.setState('Views.'+ view +'.isHomeView',  false);
+            adapter.setState(viewFolder + view +'.isHomeView',  false);
         }   
     });
 }
