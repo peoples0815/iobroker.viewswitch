@@ -1,6 +1,8 @@
 ![Logo](admin/viewswitch.png)
 # ioBroker.viewswitch
 
+# !!! Not functional yet, could damage your Iobroker Installation !!!
+
 [![NPM version](http://img.shields.io/npm/v/iobroker.viewswitch.svg)](https://www.npmjs.com/package/iobroker.viewswitch)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.viewswitch.svg)](https://www.npmjs.com/package/iobroker.viewswitch)
 ![Number of Installations (latest)](http://iobroker.live/badges/viewswitch-installed.svg)
