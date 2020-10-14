@@ -15,6 +15,10 @@ const utils = require('@iobroker/adapter-core');
  * The adapter instance
  * @type {ioBroker.Adapter}
  */
+const adapterName    = require('./package.json').name.split('.').pop();
+const dirPath        = '/opt/iobroker/iobroker-data/files/vis.0/';
+const viewsJsonFile  = '/vis-views.json'
+
 let adapter;
 
 /**
@@ -57,10 +61,18 @@ function startAdapter(options) {
         //     }
         // },
 
+   
         // is called if a subscribed state changes
         stateChange: (id, state) => {
             if (state) {
                 // The state was changed
+                checkChanges(id,state.val); 
+                
+                
+                
+                
+                
+                
                 adapter.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
             } else {
                 // The state was deleted
@@ -87,38 +99,65 @@ function startAdapter(options) {
     }));
 }
 
-function readViews() { 
-    let project = 'Wandtablet';
-    let viewList;
-    let configPath = '/opt/iobroker/iobroker-data/files/vis.0/' +project+'/vis-views.jsonn';
-    if (fs.existsSync(configPath)) 
-    {
-        viewList = Object.keys(JSON.parse(fs.readFileSync(configPath, 'utf8')));
+let viewFolder = 'Views.';
+
+
+function createObjects(arr){
+    arr.forEach(function(view) {
+        adapter.setObjectNotExistsAsync(viewFolder + view + '.showIAV', {
+            type: 'state',
+            common: {
+                name: 'View is shown in Autoview',
+                type: 'boolean',
+                def:  false,
+                role: 'indicator',
+                read: true,
+                write: true,
+            },
+            native: {},
+        });
         
-        //let data = fs.readFileSync(configPath, 'utf8');
-        //arr = Object.keys(JSON.parse(data)); 
-        viewList.shift();
-        return(viewList);
-    } else {
-        adapter.log.error('Cannot find /opt/iobroker/iobroker-data/files/vis.0/' +project+'/vis-views.json');
-    }
-}
-
-
-async function main() {
-    if(readViews())adapter.log.info(readViews());
-
-    // The adapters config (in the instance object everything under the attribute "native") is accessible via
-    // adapter.config:
-    adapter.log.info('config option1: ' + adapter.config.option1);
-    adapter.log.info('config option2: ' + adapter.config.option2);
+        adapter.setObjectNotExistsAsync(viewFolder +view + '.sWSec', {
+            type: 'state',
+            common: {
+                name: 'Time this View is shown',
+                type: 'number',
+                def:  '25',
+                role: 'indicator',
+                read: true,
+                unit:  's',
+                write: true,
+            },
+            native: {},
+        });
+        adapter.setObjectNotExistsAsync(viewFolder +view + '.isLockView', {
+            type: 'state',
+            common: {
+                name: 'View to be shown if lock is active',
+                type: 'boolean',
+                def:  false,
+                role: 'indicator',
+                read: true,
+                write: true,
+            },
+            native: {},
+        });
+        adapter.setObjectNotExistsAsync(viewFolder +view + '.isHomeView', {
+            type: 'state',
+            common: {
+                name: 'Homeview of Project',
+                type: 'boolean',
+                def:  false,
+                role: 'indicator',
+                read: true,
+                write: true,
+            },
+            native: {},
+        });
+            
+    });
     
-    /*
-        For every state in the system there has to be also an object of type state
-        Here a simple template for a boolean variable named "testVariable"
-        Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
-    */
-    await adapter.setObjectNotExistsAsync('actualHomeView', {
+    adapter.setObjectNotExistsAsync('actualHomeView', {
         type: 'state',
         common: {
             name: 'View what is set as Home',
@@ -129,7 +168,7 @@ async function main() {
         },
         native: {},
     });
-    await adapter.setObjectNotExistsAsync('actualLockView', {
+    adapter.setObjectNotExistsAsync('actualLockView', {
         type: 'state',
         common: {
             name: 'View what is set as Lockview',
@@ -141,7 +180,7 @@ async function main() {
         },
         native: {},
     });
-    await adapter.setObjectNotExistsAsync('lockViewActive', {
+    adapter.setObjectNotExistsAsync('lockViewActive', {
         type: 'state',
         common: {
             name: 'Forces Lockview to be shown',
@@ -153,7 +192,7 @@ async function main() {
         },
         native: {},
     });
-    await adapter.setObjectNotExistsAsync('switchAutomatic', {
+    adapter.setObjectNotExistsAsync('switchAutomatic', {
         type: 'state',
         common: {
             name: 'Automatic change Views',
@@ -165,7 +204,7 @@ async function main() {
         },
         native: {},
     });
-    await adapter.setObjectNotExistsAsync('switchAutomaticTimer', {
+    adapter.setObjectNotExistsAsync('switchAutomaticTimer', {
         type: 'state',
         common: {
             name: 'Timer for automatic View Change',
@@ -178,7 +217,7 @@ async function main() {
         },
         native: {},
     });
-    await adapter.setObjectNotExistsAsync('switchTimer', {
+    adapter.setObjectNotExistsAsync('switchTimer', {
         type: 'state',
         common: {
             name: 'Time to show actual View',
@@ -190,7 +229,249 @@ async function main() {
         },
         native: {},
     });
+}
 
+let project = 'Wandtablet';
+
+// Views einlesen
+function readViews() { 
+    let viewList;
+    let jsonFile = dirPath + project+'/vis-views.json';
+    if (fs.existsSync(jsonFile)) 
+    {
+        viewList = Object.keys(JSON.parse(fs.readFileSync(jsonFile, 'utf8')));
+        viewList.shift();
+        return(viewList);
+    } else {
+        adapter.log.error('Cannot find ' + configPath);
+    }
+}
+
+// Intercept and categorize changes
+function checkChanges(obj,newState) {
+    let viewArr = readViews();
+    let nmb = obj.split('.');
+    if(nmb[0] == adapterName){
+        if(nmb[2] == 'lockViewActive' && newState === true){
+            adapter.getState('actualLockView', (err, state) => {
+                if (!state || state.val === null) {
+                    adapter.log.error('Error bei getting Value of actualLockView');
+                } else {
+                    let aLV = state.val;
+                    adapter.getForeignState('vis.0.control.data', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of vis.0.control.instance');
+                        } else {
+                            if(state.val != project + '/' + aLV){
+                                switchToViewImmediate(project+'/'+aLV);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+         // View suchen
+        if(viewArr.includes(nmb[nmb.length - 2]) === true){ 
+            if(nmb[nmb.length - 1] == 'isLockView'){
+                if(newState === true){
+                    changeLockView(readViews(),nmb[nmb.length - 2]);
+                }
+            }
+            if(nmb[nmb.length - 1] == 'isHomeView'){
+                if(newState === true){
+                    changeHomeView(viewArr,nmb[nmb.length - 2]);
+                }
+            }
+
+        }   
+    }
+    if(nmb[0] == 'vis'){
+        adapter.getState('lockViewActive', (err, state) => {
+            if (!state || state.val === null) {
+                adapter.log.error('Error bei getting Value of lockViewActive');
+            } else {
+                if(state.val === true){
+//Timeout prüfen?
+//                    if(timerTout) clearTimeout(timerTout);
+                    adapter.setState('switchTimer', 0);
+                    adapter.getState('actualLockView', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of actualLockView');
+                        } else {
+                            if(state.val != newState.split('/').pop()){
+                                switchToViewImmediate(project+'/'+state.val);
+                            }
+                        }
+                    });
+                } else {
+//Timeout prüfen?
+//                  if(timerTout) clearTimeout(timerTout);
+                    adapter.setState('switchTimer', 0);
+                    adapter.getState('Views.' + newState.split('/').pop() + '.sWSec', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of sWSec');
+                        } else {
+                            if(state.val !== 0 || state.val != '0'){
+                                let timerVal = state.val;
+                                adapter.getState('actualHomeView', (err, state) => {
+                                    if (!state || state.val === null) {
+                                        adapter.log.error('Error bei getting Value of actualHomeView');
+                                    } else {
+                                        if(state.val != newState.split('/').pop()){
+                                            adapter.setState('switchTimer', timerVal);
+                                            switchToHomeView();
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+};
+
+// Umgehendes Umschalten zur Wunschview
+function switchToViewImmediate(view){
+    adapter.setForeignState('vis.0.control.instance', 'FFFFFFFF');
+    adapter.setForeignState('vis.0.control.data', view);
+    adapter.setForeignState('vis.0.control.command', 'changeView');
+}
+
+let timerTout;
+
+// Zurück zu Homeview wechseln
+function switchToHomeView() {
+    timerTout = setTimeout(function () {
+        adapter.getState('switchTimer', (err, state) => {
+            if (!state || state.val === null) {
+                adapter.log.error('Error by getting Value switchTimer');
+            } else {
+                let timer = parseInt(state.val, 10);
+                if (timer > 1) {
+                    adapter.setState('switchTimer',timer - 1);
+                    switchToHomeView();
+                }
+                else{
+                    adapter.setState('switchTimer', 0);
+                   
+                    adapter.getForeignState('vis.0.control.instance', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of vis.0.control.instance');
+                        } else {
+                            if(state.val == 'undefined') adapter.setForeignState('vis.0.control.instance', 'FFFFFFFF');
+                        }
+                    });
+                    adapter.getState('actualHomeView', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of actualHomeView');
+                        } else {
+                            adapter.log.info(project + '/' + state.val)
+                            adapter.setForeignState('vis.0.control.data', project + '/' + state.val);
+                            adapter.setForeignState('vis.0.control.command', 'changeView');
+                        }
+                    });
+                }
+            }
+        });
+    }, 1000);
+}
+
+
+
+
+//View für Lockscreen ändern
+function changeLockView(arr,activeLockView){
+    arr.forEach(function(view) {
+        if(activeLockView == view){
+            adapter.log.info('**Active Lockview is now: '+ activeLockView);
+            adapter.setState('actualLockView', activeLockView);
+        }
+        else{
+            adapter.setState('Views.'+ view +'.isLockView',  false);
+        }   
+    });
+}
+//Home-View ändern
+function changeHomeView(arr,activeHomeView){
+    arr.forEach(function(view) {
+        if(activeHomeView == view){
+            adapter.log.debug('**Active Homeview is now: '+ activeHomeView);
+            adapter.setState('actualHomeView', activeHomeView);
+        }
+        else{
+            adapter.setState('Views.'+ view +'.isHomeView',  false);
+        }   
+    });
+}
+
+
+
+
+
+
+
+
+//adapter.getForeignState('javascript.0.Ordner.Datenpunkt', function (err, state) {
+
+
+//adapter.subscribeForeignStates('vis.0.control.data'); 
+
+
+
+async function main() {
+    if(readViews()){
+        adapter.log.info(readViews());
+        createObjects(readViews());
+    }
+    
+    
+    // The adapters config (in the instance object everything under the attribute "native") is accessible via
+    // adapter.config:
+    //adapter.log.info('config option1: ' + adapter.config.option1);
+    
+    //adapter.log.info('config VisProjekt: ' + adapter.config.visprojekt);
+    //adapter.log.info('Adaptername: ' + adapterName);
+    
+    
+    
+    
+    
+    /*
+        For every state in the system there has to be also an object of type state
+        Here a simple template for a boolean variable named "testVariable"
+        Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
+    */
+    
+    fs.readdir(dirPath, (err, files) => { 
+      if (err) 
+        adapter.log.info(err); 
+      else { 
+        files.forEach(file => { 
+            let isDirExists = fs.existsSync(dirPath + file) && fs.lstatSync(dirPath + file).isDirectory();
+            if(isDirExists === true){
+                if(fs.existsSync(dirPath + file + viewsJsonFile)){
+                    adapter.log.info('**********************************'); 
+                    adapter.log.info(file);
+                    adapter.log.info('**********************************'); 
+                }
+            }
+        }) 
+      } 
+    }) 
+   
+
+    //ViewSwitch Folder Subscription
+    adapter.subscribeStates(viewFolder +'*');
+    
+    //ViewSwitch Folder Subscription
+    adapter.subscribeStates('lockViewActive');
+    
+    //Vis data Subscription
+    adapter.subscribeForeignStates('vis.0.control.data'); 
+ 
+    
     // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
     adapter.subscribeStates('testVariable');
     // You can also add a subscription for multiple states. The following line watches all states starting with "lights."

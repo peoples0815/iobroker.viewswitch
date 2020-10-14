@@ -18,8 +18,35 @@
     <script type="text/javascript" src="words.js"></script>
 
     <script type="text/javascript">
+        /*
+        Um einen Dialog zu öffnen
+        if (typeof customPostOnSave !== 'undefined') {
+
+     customPostOnSave.mydevices = function ($div, instance) {
+
+          if (!$div.find('input[data-field="id"]').val()) {
+
+                  return _('Please enter ID');
+
+          }
+
+     };
+
+}
+ */       
+        
+       
         // This will be called by the admin adapter when the settings page loads
         function load(settings, onChange) {
+            //////////////////////////////////////
+           // var fs = require("fs");
+           // var dirPath        = '/opt/iobroker/iobroker-data/files/vis.0/';
+           // var viewsJsonFile  = '/vis-views.json'
+            
+            
+            
+            
+            /////////////////////////////////////////////
             // example: select elements with id=key and class=value and insert value
             if (!settings) return;
             $('.value').each(function () {
@@ -41,6 +68,15 @@
             onChange(false);
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
+        
+        
+           // generateProjectList(dirPath,viewsJsonFile);
+        
+            let visProjects = '<option value="undefined" class="translate">Platzhalter</option>';
+            visProjects += '<option value="Wandtablet" class="translate">Wandtablet</option>';
+            visProjects += '<option value="main" class="translate">main</option>';
+            $('#visProjects').html(visProjects);
+        
         }
 
         // This will be called by the admin adapter when the user presses the save button
@@ -57,6 +93,8 @@
             });
             callback(obj);
         }
+        
+        
     </script>
 
 </head>
@@ -72,37 +110,34 @@
         </div>
         <div class="row">
             <div class="input-field col s10 m4">
-                <select id="land" class="value">
-                    <option value="" class="translate">no map</option>
-                    <option value="baw">Baden-Württemberg</option>
-                    <option value="bay">Bayern</option>
-                    <option value="bbb">Berlin, Brandenburg</option>
-                    <option value="hes">Hessen</option>
-                    <option value="mvp">Mecklenburg-Vorpommer</option>
-                    <option value="nib">Niedersachsen, Bremen</option>
-                    <option value="nrw">Nordrhein-Westfalen</option>
-                    <option value="rps">Rheinland-Pfalz, Saarland</option>
-                    <option value="sac">Sachsen</option>
-                    <option value="saa">Sachsen-Anhalt</option>
-                    <option value="shh">Schleswig-Holstein, Hamburg</option>
-                    <option value="thu">Thüringen</option>
+                <select id="visProjects" class="value">
+                    
                 </select>
-                <label  class="translate" for="land">Get map for warning</label>
+                <label  class="translate" for="visProject">Select your Project</label>
             </div>
+        </div>
         <!-- Put your content here -->
 
         <!-- For example columns with settings: -->
+        <div class="row">
+            <div class="input-field col s10 m4">
+                <select id="select_projects" class="value">
+                    
+                </select>
+                <label  class="translate" for="select_projects">Select your Project</label>
+            </div>
+        </div>
+        
+        <!--
         <div class="row">
             <div class="col s6 input-field">
                 <input type="checkbox" class="value" id="option1" />
                 <label for="option1" class="translate">option1</label>
             </div>
 
-            <div class="col s6 input-field">
-                <input type="text" class="value" id="option2" />
-                <label for="option2" class="translate">option2</label>
-            </div>
+            
         </div>
+        -->
 
     </div>
 
