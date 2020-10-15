@@ -247,6 +247,92 @@ function readViews() {
 }
 
 
+// Intercept and categorize changes
+/*
+function checkChanges(obj,newState) {
+    let viewArr = readViews();
+    let nmb = obj.split('.');
+    if(nmb[0] == adapterName){
+        if(nmb[2] == 'lockViewActive' && newState === true){
+            adapter.getState('actualLockView', (err, state) => {
+                if (!state || state.val === null) {
+                    adapter.log.error('Error bei getting Value of actualLockView');
+                } else {
+                    let aLV = state.val;
+                    adapter.getForeignState('vis.0.control.data', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of vis.0.control.instance');
+                        } else {
+                            if(state.val != project + '/' + aLV){
+                                switchToViewImmediate(project+'/'+aLV);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+         // View suchen
+        if(viewArr.includes(nmb[nmb.length - 2]) === true){ 
+            if(nmb[nmb.length - 1] == 'isLockView'){
+                if(newState === true){
+                    changeLockView(readViews(),nmb[nmb.length - 2]);
+                }
+            }
+            if(nmb[nmb.length - 1] == 'isHomeView'){
+                if(newState === true){
+                    changeHomeView(viewArr,nmb[nmb.length - 2]);
+                }
+            }
+
+        }   
+    }
+    if(nmb[0] == 'vis'){
+        adapter.getState('lockViewActive', (err, state) => {
+            if (!state || state.val === null) {
+                adapter.log.error('Error bei getting Value of lockViewActive');
+            } else {
+                if(state.val === true){
+//Timeout prüfen?
+                    if(timerTout) clearTimeout(timerTout);
+                    adapter.setState('switchTimer', 0);
+                    adapter.getState('actualLockView', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of actualLockView');
+                        } else {
+                            if(state.val != newState.split('/').pop()){
+                                switchToViewImmediate(project+'/'+state.val);
+                            }
+                        }
+                    });
+                } else {
+//Timeout prüfen?
+                    if(timerTout) clearTimeout(timerTout);
+                    adapter.setState('switchTimer', 0);
+                    adapter.getState(viewFolder + newState.split('/').pop() + '.sWSec', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('---Error bei getting Value of sWSec');
+                        } else {
+                            if(state.val !== 0 || state.val != '0'){
+                                let timerVal = state.val;
+                                adapter.getState('actualHomeView', (err, state) => {
+                                    if (!state || state.val === null) {
+                                        adapter.log.error('Error bei getting Value of actualHomeView');
+                                    } else {
+                                        if(state.val != newState.split('/').pop()){
+                                            adapter.setState('switchTimer', timerVal);
+                                            switchToHomeView();
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+};
+*/
 async function checkChanges(obj,newState){
   try{
         const switchTimer = await adapter.getStateAsync('switchTimer');
@@ -310,7 +396,65 @@ function switchToViewImmediate(view){
 
 let timerTout;
 
-
+/*
+// Zurück zu Homeview wechseln
+function switchToHomeView() {
+    timerTout = setTimeout(function () {
+        adapter.getState('switchTimer', (err, state) => {
+            if (!state || state.val === null) {
+                adapter.log.error('Error by getting Value switchTimer');
+            } else {
+                let timer = parseInt(state.val, 10);
+                if (timer > 1) {
+                    adapter.getState('lockViewActive', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of lockViewActive');
+                            } else {
+                                if(state.val === true){
+                //Timeout prüfen?
+                                    if(timerTout) clearTimeout(timerTout);
+                                    adapter.setState('switchTimer', 0);
+                                    adapter.getState('actualLockView', (err, state) => {
+                                        if (!state || state.val === null) {
+                                            adapter.log.error('Error bei getting Value of actualLockView');
+                                        } else {
+                                            if(state.val != newState.split('/').pop()){
+                                                switchToViewImmediate(project+'/'+state.val);
+                                            }
+                                        }
+                                    });
+                                } else {
+                                    adapter.setState('switchTimer',timer - 1);
+                                    switchToHomeView(); 
+                                }
+                            }
+                    });
+                }
+                else{
+                    adapter.setState('switchTimer', 0);
+                   
+                    adapter.getForeignState('vis.0.control.instance', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of vis.0.control.instance');
+                        } else {
+                            if(state.val == 'undefined') adapter.setForeignState('vis.0.control.instance', 'FFFFFFFF');
+                        }
+                    });
+                    adapter.getState('actualHomeView', (err, state) => {
+                        if (!state || state.val === null) {
+                            adapter.log.error('Error bei getting Value of actualHomeView');
+                        } else {
+                            adapter.log.info(project + '/' + state.val)
+                            adapter.setForeignState('vis.0.control.data', project + '/' + state.val);
+                            adapter.setForeignState('vis.0.control.command', 'changeView');
+                        }
+                    });
+                }
+            }
+        });
+    }, 1000);
+}
+*/
 
 
 
