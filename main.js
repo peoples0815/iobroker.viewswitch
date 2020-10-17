@@ -20,6 +20,11 @@ const dirPath        = '/opt/iobroker/iobroker-data/files/vis.0/';
 const viewsJsonFile  = '/vis-views.json'
 
 let adapter;
+let project = 'Wandtablet';
+let viewFolder = 'Views.';
+
+let timerTout;
+let i = 0;
 
 /**
  * Starts the adapter instance
@@ -96,8 +101,7 @@ function startAdapter(options) {
         // },
     }));
 }
-let project = 'Wandtablet';
-let viewFolder = 'Views.';
+
 
 
 function createObjects(arr){
@@ -246,13 +250,14 @@ function readViews() {
     }
 }
 
-
+// Abfangen und Auswerten der geänderten Datenpunkte
 async function checkChanges(obj,newState){
   try{
         const switchTimer = await adapter.getStateAsync('switchTimer');
         const lockViewActive = await adapter.getStateAsync('lockViewActive');
         const actualLockView = await adapter.getStateAsync('actualLockView');
         const actualHomeView = await adapter.getStateAsync('actualHomeView');
+        const switchAutomaticTimer = await adapter.getStateAsync('switchAutomaticTimer');
         const visData = await adapter.getForeignState('vis.0.control.data');
       
         let viewArr = readViews();
@@ -262,8 +267,15 @@ async function checkChanges(obj,newState){
                 if(visData != project + '/' + actualLockView){
                     switchToViewImmediate(project+'/'+actualLockView);
                 }
+            }
+            if(nmb[2] == 'switchAutomatic'){
+                if(newState === true){
+                    autoSwitchView(i)
+                } else {
+                    switchToViewImmediate(project+'/'+actualHomeView.val);
+                }
             } 
-            // View suchen
+            // Standard Views festlegen
             if(viewArr.includes(nmb[nmb.length - 2]) === true){ 
                 if(nmb[nmb.length - 1] == 'isLockView'){
                     if(newState === true){
@@ -283,6 +295,7 @@ async function checkChanges(obj,newState){
                 if(timerTout) clearTimeout(timerTout);
                 await adapter.setStateAsync('switchTimer', 0);
                 if(actualLockView.val != newState.split('/').pop()){
+                    await adapter.setStateAsync(switchAutomaticTimer,0);
                     switchToViewImmediate(project+'/'+actualLockView.val);
                 }
             } else {
@@ -308,47 +321,113 @@ function switchToViewImmediate(view){
     adapter.setForeignState('vis.0.control.command', 'changeView');
 }
 
-let timerTout;
 
 
 
-
-
+// Zurückschalten auf die Homeview
 async function switchToHomeView() {
       try {
           const switchTimer = await adapter.getStateAsync('switchTimer');
           const lockViewActive = await adapter.getStateAsync('lockViewActive');
           const actualLockView = await adapter.getStateAsync('actualLockView');
           const actualHomeView = await adapter.getStateAsync('actualHomeView');
+          const switchAutomatic = await adapter.getStateAsync('switchAutomatic');
           const visInstance = await adapter.getForeignStateAsync('vis.0.control.instance');
-          timerTout = setTimeout(function () {
-                 let timer = parseInt(switchTimer.val, 10)
-                 if(timer > 1){
-                     if(lockViewActive.val === true){
-                         if(timerTout) clearTimeout(timerTout);
-                         adapter.setState('switchTimer', 0);
-        //Woher kommt newState                       
-                         if(actualLockView.val != newState.split('/').pop()){
-                             switchToViewImmediate(project+'/'+state.val);
-                         }
+          if(switchAutomatic !== true){
+                timerTout = await setTimeout(async function () {
+                     let timer = parseInt(switchTimer.val, 10)
+                     if(timer > 1){
+                         if(lockViewActive.val === true){
+                             if(timerTout) clearTimeout(timerTout);
+                             await adapter.setStateAsync('switchTimer', 0);
+            //Woher kommt newState                       
+                             if(actualLockView.val != newState.split('/').pop()){
+                                 switchToViewImmediate(project+'/'+actualLockView.val);
+                             }
+                         } else {
+                            await adapter.setStateAsync('switchTimer',timer - 1);
+                            switchToHomeView(); 
+                        }
                      } else {
-                        adapter.setState('switchTimer',timer - 1);
-                        switchToHomeView(); 
-                    }
-                 } else {
-                     adapter.setState('switchTimer', 0);
-                     if(visInstance.val == undefined) adapter.setForeignState('vis.0.control.instance', 'FFFFFFFF');
+                         await adapter.setStateAsync('switchTimer', 0);
+                         if(visInstance.val == undefined) await adapter.setForeignStateAsync('vis.0.control.instance', 'FFFFFFFF');
 
-                     adapter.setForeignState('vis.0.control.data', project + '/' + actualHomeView.val);
-                     adapter.setForeignState('vis.0.control.command', 'changeView');
+                         await adapter.setForeignStateAsync('vis.0.control.data', project + '/' + actualHomeView.val);
+                         await adapter.setForeignStateAsync('vis.0.control.command', 'changeView');
 
-                 }
-            }, 500);
-
+                     }
+                }, 1000); 
+          }
     } catch (error) {
       adapter.log.error(error);
     }
 }
+
+
+async function autoSwitchView(i){
+    try{
+                            
+
+        let viewArr = readViews();
+        const switchAutomatic = await adapter.getStateAsync('switchAutomatic');
+        const switchAutomaticTimer = await adapter.getStateAsync('switchAutomaticTimer');
+        if(i == '') i = 0;
+        if(i < viewArr.length){
+            const showIAV = await adapter.getStateAsync(viewFolder + viewArr[i]+'.'+'showIAV');
+            if(showIAV === true){
+                            adapter.log.info('***********************************************'+viewFolder + viewArr[i]+'.'+'showIAV');
+
+                timerAutoSV = await setTimeout(async function () {
+                    let timer = parseInt(switchAutomaticTimer, 10);
+                    if (timer > 1) {
+                        await adapter.setStateAsync('switchTimer', timer);
+                        await adapter.setStateAsync('switchAutomaticTimer', timer - 1);
+                        autoSwitchView(i);
+                    }
+                    else{
+                        await adapter.setStateAsync('switchAutomaticTimer', 0);
+                        if(switchAutomatic === true) switchView(project+viewArr[i]);
+                        autoSwitchView((i+1));
+                    }
+                }, 1000);
+            } else {
+                //autoSwitchView((i+1));
+                adapter.log.info('Fehler bei show in Autoview')
+            }
+        } else {
+            //autoSwitchView(0);
+            adapter.log.info('Fehler bei Arr-length')
+        }
+    } catch (error) {
+        adapter.log.error(error);
+    }
+}
+            
+
+
+/*
+
+function startAutoSwitchView(dspTime,i){
+    if(getState(pfad0 + 'Auto_Switch_View').val === true){
+        if(dspTime !== ''){
+            setState(pfad0 + 'Timer_View_Switch',parseInt(dspTime, 10));
+        }
+        else{
+            setState(pfad0 + 'Timer_View_Switch',15);
+        }
+        autoSwitchView(dspTime,i);
+    } 
+    else{
+        if(timerTout) clearTimeout(timerTout);
+        switchView(project + DefaultView);
+        setStateDelayed(pfad0 + 'Timer_View_Switch',0,2000);
+    }
+}
+*/
+
+
+
+
 
 
 
@@ -396,8 +475,7 @@ async function main() {
        // adapter.log.info(readViews());
         createObjects(readViews());
     }
-
-    
+   
     
     // The adapters config (in the instance object everything under the attribute "native") is accessible via
     // adapter.config:
@@ -441,9 +519,9 @@ async function main() {
     }) 
 */
 
+    //SwitchAutomatic Subscription
+    adapter.subscribeStates('switchAutomatic')
     
-    
-   
     //ViewSwitch Folder Subscription
     adapter.subscribeStates(viewFolder +'*');
     
@@ -452,7 +530,7 @@ async function main() {
     
     //Vis data Subscription
     adapter.subscribeForeignStates('vis.0.control.data'); 
-
+    
     
    
 
