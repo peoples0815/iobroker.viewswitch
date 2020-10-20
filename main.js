@@ -531,7 +531,6 @@ async function main() {
 
 
 
-
 // @ts-ignore parent is a valid property on module
 if (module.parent) {
     // Export startAdapter in compact mode
