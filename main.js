@@ -120,7 +120,7 @@ async function createObjects(arr){
             common: {
                 name: 'View is shown in Autoview',
                 type: 'boolean',
-                def:  false,
+                def:  true,
                 role: 'indicator',
                 read: true,
                 write: true,
@@ -243,24 +243,20 @@ async function createObjects(arr){
 
 // delete not longer existing views
 async function deleteVisObjects(arr){
-    adapter.getStates('Views'+ '.*', async function (err, states) {
-        for (const idS in states) {
-            //if(arr.includes(idS))
-            //adapter.log.info(JSON.stringify(idS));
-            let nmb = idS.split('.')[3];
-            //adapter.log.info(nmb[3])
+    try{
+        const states = await adapter.getStatesAsync('Views' + '.*');
+        for (const idS in states){
+           let nmb = idS.split('.')[3];
             if(arr.includes(nmb)){
-                adapter.log.debug('View in Json vorhanden: '+idS)
+                adapter.log.debug('View exists in Json: '+idS)
             } else {
-                adapter.log.debug('View in Json NICHT vorhanden: '+idS)
-                adapter.delObject(idS, function(err){
-                    if (err) {
-                        adapter.log.error('cannot delete state : ' + ids + ' Error: ' + err);
-                    }
-                });
-            }
+                adapter.log.debug('View does NOT exist in Json: '+idS)
+                await adapter.delObject(idS);
+            } 
         }
-    });
+    } catch (err) {
+        adapter.log.error(err);
+    }
 }
 
 // read existing views
@@ -282,23 +278,44 @@ async function checkChanges(obj,newState){
   try{
         const switchTimer = await adapter.getStateAsync('switchTimer');
         const lockViewActive = await adapter.getStateAsync('lockViewActive');
+        const switchAutomatic = await adapter.getStateAsync('switchAutomatic')
         const actualLockView = await adapter.getStateAsync('actualLockView');
         const actualHomeView = await adapter.getStateAsync('actualHomeView');
         const switchAutomaticTimer = await adapter.getStateAsync('switchAutomaticTimer');
-        const visData = await adapter.getForeignState('vis.0.control.data');
+        const visData = await adapter.getForeignStateAsync('vis.0.control.data');
       
         let viewArr = readViews();
         let nmb = obj.split('.');
-        if(nmb[0] == adapterName){
-            if(nmb[2] == 'lockViewActive' && newState === true){
-                if(visData != project + '/' + actualLockView){
-                    switchToViewImmediate(project+'/'+actualLockView);
-                }
+ /*     
+        
+if(nmb[0] == 'vis'){
+            const sWSec = await adapter.getStateAsync(viewFolder + '.' + newState.split('/').pop() + '.sWSec');
+            if(lockViewActive.val === false){
+                if(sWSec.val !== 0 || sWSec.val != '0'){
+                    if(actualHomeView.val != newState.split('/').pop()){
+                        adapter.log.info('ahv: '+actualHomeView.val+'visdata:'+newState.split('/').pop())
+                        await adapter.setStateAsync('switchTimer', sWSec.val);
+                        switchToHomeView();
+                         adapter.log.info('+++++++++++++ Hier sind wir +++++++++++++++++++')
+                    }
+                    else {
+                        adapter.log.info('+++++++++++++ Homeview ist erreicht! +++++++++++++++++++')
+                        if(timerTout) clearTimeout(timerTout);
+                        adapter.setState('switchTimer', 0);
+                    }
+                } 
             }
+        }
+////////////////////////
+*/      
+        
+        if(nmb[0] == adapter.name){
             if(nmb[2] == 'switchAutomatic'){
-                if(newState === true){
-                    autoSwitchView(i)
+                if(switchAutomatic.val === true){
+                    autoSwitchView(0);
                 } else {
+                    if(timerAutoSV) clearTimeout(timerAutoSV);
+                    adapter.setState(switchTimer, 0);
                     switchToViewImmediate(project+'/'+actualHomeView.val);
                 }
             } 
@@ -315,10 +332,30 @@ async function checkChanges(obj,newState){
                     }
                 }
             }
+            if(nmb[2] == 'lockViewActive'){
+                if(lockViewActive.val === true){
+                    if(actualLockView.val == ''){
+                        adapter.log.info('!!!First define your LockView!!!');
+                        await adapter.setStateAsync('lockViewActive', false);
+                    } else {
+                        if(timerTout) clearTimeout(timerTout);
+                        await adapter.setStateAsync('switchTimer', 0);
+                        if(actualLockView.val != visData.val.split('/').pop()){
+                            await adapter.setStateAsync(switchAutomaticTimer,0);
+                            switchToViewImmediate(project+'/'+actualLockView.val);
+                        }
+                    }
+                } else {
+                    if(timerTout) clearTimeout(timerTout);
+                    await adapter.setStateAsync('switchTimer', 0);
+                    switchToHomeView();
+                } 
+
+            }
         }
         if(nmb[0] == 'vis'){
             const sWSec = await adapter.getStateAsync(viewFolder + '.' + newState.split('/').pop() + '.sWSec');
-            if(lockViewActive .val === true){
+            if(lockViewActive.val === true){
                 if(timerTout) clearTimeout(timerTout);
                 await adapter.setStateAsync('switchTimer', 0);
                 if(actualLockView.val != newState.split('/').pop()){
@@ -336,6 +373,7 @@ async function checkChanges(obj,newState){
                 }
             }
         }
+        
   } catch (error) {
     adapter.log.error('checkChanges:'+error);
   }
@@ -360,29 +398,34 @@ async function switchToHomeView() {
           const actualHomeView = await adapter.getStateAsync('actualHomeView');
           const switchAutomatic = await adapter.getStateAsync('switchAutomatic');
           const visInstance = await adapter.getForeignStateAsync('vis.0.control.instance');
-          if(switchAutomatic !== true){
-                timerTout = await setTimeout(async function () {
-                     let timer = parseInt(switchTimer.val, 10)
-                     if(timer > 1){
-                         if(lockViewActive.val === true){
-                             if(timerTout) clearTimeout(timerTout);
-                             await adapter.setStateAsync('switchTimer', 0);
-                             if(actualLockView.val != newState.split('/').pop()){
-                                 switchToViewImmediate(project+'/'+actualLockView.val);
-                             }
+          
+          if(switchAutomatic.val !== true){
+                if(actualHomeView.val == ''){
+                    adapter.log.info('!!!First define your HomeView!!!');
+                } else {
+                    timerTout = await setTimeout(async function () {
+                         let timer = parseInt(switchTimer.val, 10)
+                         if(timer > 1){
+                             if(lockViewActive.val === true){
+                                 if(timerTout) clearTimeout(timerTout);
+                                 await adapter.setStateAsync('switchTimer', 0);
+                                 if(actualLockView.val != actualLockView.val.split('/').pop()){
+                                     switchToViewImmediate(project+'/'+actualLockView.val);
+                                 }
+                             } else {
+                                await adapter.setStateAsync('switchTimer',timer - 1);
+                                switchToHomeView(); 
+                            }
                          } else {
-                            await adapter.setStateAsync('switchTimer',timer - 1);
-                            switchToHomeView(); 
-                        }
-                     } else {
-                         await adapter.setStateAsync('switchTimer', 0);
-                         if(visInstance.val == undefined) await adapter.setForeignStateAsync('vis.0.control.instance', 'FFFFFFFF');
+                             await adapter.setStateAsync('switchTimer', 0);
+                             if(visInstance.val == undefined) await adapter.setForeignStateAsync('vis.0.control.instance', 'FFFFFFFF');
 
-                         await adapter.setForeignStateAsync('vis.0.control.data', project + '/' + actualHomeView.val);
-                         await adapter.setForeignStateAsync('vis.0.control.command', 'changeView');
+                             await adapter.setForeignStateAsync('vis.0.control.data', project + '/' + actualHomeView.val);
+                             await adapter.setForeignStateAsync('vis.0.control.command', 'changeView');
 
-                     }
-                }, 1000); 
+                         }
+                    }, 1000); 
+                }
           }
     } catch (error) {
       adapter.log.error(error);
@@ -391,42 +434,54 @@ async function switchToHomeView() {
 
 // Automatic switch the existing Views
 
-//...... Not working yet
+//...... Not working yet 
+// Timer läuft immer noch einmal durch
+
 async function autoSwitchView(i){
     try{
         let viewArr = readViews();
+        const switchTimer = await adapter.getStateAsync('switchTimer');
         const switchAutomatic = await adapter.getStateAsync('switchAutomatic');
         const switchAutomaticTimer = await adapter.getStateAsync('switchAutomaticTimer');
-        if(i == '') i = 0;
-        if(i < viewArr.length){
-            const showIAV = await adapter.getStateAsync(viewFolder + '.' + viewArr[i]+'.'+'showIAV');
-            if(showIAV === true){
-                timerAutoSV = await setTimeout(async function () {
-                    let timer = parseInt(switchAutomaticTimer, 10);
-                    if (timer > 1) {
-                        await adapter.setStateAsync('switchTimer', timer);
-                        await adapter.setStateAsync('switchAutomaticTimer', timer - 1);
-                        autoSwitchView(i);
-                    }
-                    else{
-                        await adapter.setStateAsync('switchAutomaticTimer', 0);
-                        if(switchAutomatic === true) switchView(project+viewArr[i]);
-                        autoSwitchView((i+1));
-                    }
-                }, 1000);
+        const actualHomeView = await adapter.getStateAsync('actualHomeView');
+
+        if(switchAutomatic.val === true){
+            if(i == '') i = 0;
+            if(i < viewArr.length){
+                const showIAV = await adapter.getStateAsync(viewFolder + '.' + viewArr[i]+'.'+'showIAV');
+                if(showIAV.val === true){
+                    let timerAutoSV = await setTimeout(async function () {
+                        //if(switchTimer.val === 0 || switchTimer.val == '0') adapter.setState(switchTimer, switchAutomaticTimer.val)
+                        let timer = parseInt(switchTimer.val, 10);
+                        if (timer > 1) {
+                            await adapter.setStateAsync('switchTimer', timer -1);
+                            //await adapter.setStateAsync('switchAutomaticTimer', timer - 1);
+                            autoSwitchView(i);
+                        }
+                        else{
+                            await adapter.setStateAsync('switchTimer', switchAutomaticTimer.val);
+                            if(switchAutomatic.val === true) switchToViewImmediate(project+'/'+viewArr[i]);
+                            autoSwitchView((i+1));
+                        }
+                    }, 1000);
+                } else {
+                    autoSwitchView((i+1));
+                    adapter.log.info('For this View AV is disabled')
+                }
             } else {
-                //autoSwitchView((i+1));
-                adapter.log.info('Fehler bei show in Autoview')
+                autoSwitchView(0);
+                adapter.log.info('Jump back to first AutoView')
             }
         } else {
-            //autoSwitchView(0);
-            adapter.log.info('Fehler bei Arr-length')
+            if(timerAutoSV) clearTimeout(timerAutoSV);
+            await adapter.setStateAsync(switchTimer, 0);
+            switchToViewImmediate(project+'/'+actualHomeView.val);
         }
     } catch (error) {
         adapter.log.error(error);
     }
 }
-            
+           
 
 //Change View for Lockscreen
 function changeLockView(arr,activeLockView){
@@ -452,7 +507,31 @@ function changeHomeView(arr,activeHomeView){
         }   
     });
 }
+//////////////////////////////////
+/*    
+    
+Projekte auslesen
 
+///////////////////////////////////////
+    fs.readdir(dirPath, (err, files) => { 
+      if (err) 
+        adapter.log.info(err); 
+      else { 
+        files.forEach(file => { 
+            let isDirExists = fs.existsSync(dirPath + file) && fs.lstatSync(dirPath + file).isDirectory();
+            if(isDirExists === true){
+                if(fs.existsSync(dirPath + file + viewsJsonFile)){
+                    adapter.log.info('**********************************'); 
+                    adapter.log.info(file);
+                    adapter.log.info('**********************************'); 
+                }
+            }
+        }) 
+      } 
+    }) 
+*/
+
+////////////////////////////////
 
 async function main() {
     if(readViews()){
