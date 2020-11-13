@@ -21,49 +21,19 @@
         /*
         Um einen Dialog zu öffnen
         if (typeof customPostOnSave !== 'undefined') {
-
      customPostOnSave.mydevices = function ($div, instance) {
-
           if (!$div.find('input[data-field="id"]').val()) {
-
                   return _('Please enter ID');
-
           }
-
      };
-
 }
  */       
         
-       this.conn.readProjects(function (err, projects) {
-            var text = '';
-            if (projects.length) {
-                for (var d = 0; d < projects.length; d++) {
-                    text += '<li class="ui-state-default project-select ' + (projects[d].name + '/' === that.projectPrefix ? 'ui-state-active' : '') +
-                        ' menu-item" data-project="' + projects[d].name + '"><a>' + projects[d].name + (projects[d].readOnly ? ' (' + _('readOnly') + ')' : '') + '</a></li>\n';
-                    if (projects[d].name + '/' === that.projectPrefix) {
-                        $('#vis_access_mode').prop('checked', projects[d].mode & 0x60);
-                    }
-                }
-                //$('#menu_projects').html(text);
-                //$('.project-select').unbind('click').click(function () {
-                //    window.location.href = 'edit.html?' + $(this).attr('data-project');
-                //});
-                alert(text);
-            } else {
-                $('#li_menu_projects').hide();
-            }
-        });
+      
         
         // This will be called by the admin adapter when the settings page loads
         function load(settings, onChange) {
-            //////////////////////////////////////
-           
-   readProjects();
-            
-            
-            
-            /////////////////////////////////////////////
+          
             // example: select elements with id=key and class=value and insert value
             if (!settings) return;
             $('.value').each(function () {
@@ -86,16 +56,54 @@
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
         
-        
-           // generateProjectList(dirPath,viewsJsonFile);
+        /*
         
             let visProjects = '<option value="undefined" class="translate">Platzhalter</option>';
             visProjects += '<option value="Wandtablet" class="translate">Wandtablet</option>';
             visProjects += '<option value="main" class="translate">main</option>';
             $('#visProjects').html(visProjects);
+          */  
+ 
+    /////////////////////////////////////////////////////////////////////7
+            
+            
+         function test() {
+            socket.emit('getState', 'viewswitch.0.existingProjects', function (err, state) {
+                if (state && state.val) {
+                    fillSelect(settings['existingProjects'], state.val);  
+                }
+            });
+        };    
+         
+            
+        function fillSelect(id, str) {
+            var $sel = $('#existingProjects');
+            let result = '';
+            let arrCounties = [];
+            
+            //arrCounties = arrCounties.sort((a, b) => (a.name > b.name) ? 1 : -1);
+            //for (const i in arrCounties) {
+            //    result.push(arrCounties[i].id + ':' + arrCounties[i].name);
+            //}
+            $sel.html('<option value="allProjects">' + _('no selection') + '</option>');
+            
+            result = str.split(',');
+            result.sort();
+            result.forEach(function(val) {
+                
+                     //$('#counties').append('<option value="' + val[0] + '"' + (id === val[0] ? ' selected' : '') + '>' + val[1] + '</option>');
+                $('#existingProjects').append('<option value="' + val + '"' + (id === val ? ' selected' : '') + '>'+val+' </option>');
+            });
+            $sel.select();
+        }   
+            
         
+            test();
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////        
+            
         }
-
+        
+       
         // This will be called by the admin adapter when the user presses the save button
         function save(callback) {
             // example: select elements with class=value and build settings object
@@ -138,7 +146,7 @@
         <!-- For example columns with settings: -->
         <div class="row">
             <div class="input-field col s10 m4">
-                <select id="select_projects" class="value">
+                <select id="existingProjects" class="value">
                     
                 </select>
                 <label  class="translate" for="select_projects">Select your Project</label>
@@ -151,7 +159,6 @@
                 <input type="checkbox" class="value" id="option1" />
                 <label for="option1" class="translate">option1</label>
             </div>
-
             
         </div>
         -->

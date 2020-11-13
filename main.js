@@ -57,6 +57,10 @@ function startAdapter(options) {
             }
         },
 
+        
+        
+        
+        
         // If you need to react to object changes, uncomment the following method.
         // You also need to subscribe to the objects with `adapter.subscribeObjects`, similar to `adapter.subscribeStates`.
         // objectChange: (id, obj) => {
@@ -235,6 +239,17 @@ async function createObjects(arr){
             role: 'indicator',
             read: true,
             unit: 's',
+            write: true,
+        },
+        native: {},
+    });
+    adapter.setObjectNotExistsAsync('existingProjects', {
+        type: 'state',
+        common: {
+            name: 'List of existing Projects',
+            type: 'string',
+            role: 'indicator',
+            read: true,
             write: true,
         },
         native: {},
@@ -508,28 +523,36 @@ function changeHomeView(arr,activeHomeView){
     });
 }
 //////////////////////////////////
-/*    
     
-Projekte auslesen
+    
+//Projekte auslesen
 
 ///////////////////////////////////////
-    fs.readdir(dirPath, (err, files) => { 
+
+
+
+
+ 
+
+function generateProjectList(dirPath, viewsJsonFile)
+{
+     let projectList = '';
+     fs.readdir(dirPath, (err, files) => { 
       if (err) 
-        adapter.log.info(err); 
+        adapter.log.err(err); 
       else { 
         files.forEach(file => { 
             let isDirExists = fs.existsSync(dirPath + file) && fs.lstatSync(dirPath + file).isDirectory();
             if(isDirExists === true){
                 if(fs.existsSync(dirPath + file + viewsJsonFile)){
-                    adapter.log.info('**********************************'); 
-                    adapter.log.info(file);
-                    adapter.log.info('**********************************'); 
+                    projectList += file+',';
                 }
             }
-        }) 
-      } 
+        })
+        adapter.setState('existingProjects', projectList.substr(0, projectList.length-1));
+      }                             
     }) 
-*/
+}
 
 ////////////////////////////////
 
@@ -537,9 +560,11 @@ async function main() {
     if(readViews()){
        // adapter.log.info(readViews());
         createObjects(readViews());
+        deleteVisObjects(readViews());
     }
     
-    deleteVisObjects(readViews());
+    
+    generateProjectList(dirPath, viewsJsonFile)
     
     // The adapters config (in the instance object everything under the attribute "native") is accessible via
     // adapter.config:
@@ -553,6 +578,12 @@ async function main() {
         deleteVisObjects(readViews());
     });
     
+    //generateProjectList(dirPath, viewsJsonFile);
+    
+   
+   
+    
+   
     
     
     /*

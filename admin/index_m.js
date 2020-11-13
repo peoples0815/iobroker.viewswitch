@@ -42,14 +42,14 @@ readProjects:     function (callback) {
 
 
 ////////////////////////////////////////////////////
-editFillProjects:       function () {
+    editFillProjects:       function () {
         var that = this;
         // fill projects
         this.conn.readProjects(function (err, projects) {
             var text = '';
             if (projects.length) {
                 for (var d = 0; d < projects.length; d++) {
-                    text += '<li class="ui-state-default project-select ' + (projects[d].name + '/' === that.projectPrefix ? 'ui-state-active' : '') +
+                    text += '<li' + (projects[d].name + '/' === that.projectPrefix ? 'ui-state-active' : '') +
                         ' menu-item" data-project="' + projects[d].name + '"><a>' + projects[d].name + (projects[d].readOnly ? ' (' + _('readOnly') + ')' : '') + '</a></li>\n';
                     if (projects[d].name + '/' === that.projectPrefix) {
                         $('#vis_access_mode').prop('checked', projects[d].mode & 0x60);
