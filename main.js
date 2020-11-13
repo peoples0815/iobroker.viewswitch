@@ -20,7 +20,7 @@ const dirPath        = '/opt/iobroker/iobroker-data/files/vis.0/';
 const viewsJsonFile  = '/vis-views.json'
 
 let adapter;
-let project = 'Wandtablet';
+
 let viewFolder = 'Views';
 
 let timerTout;
@@ -277,14 +277,16 @@ async function deleteVisObjects(arr){
 // read existing views
 function readViews() { 
     let viewList;
-    let jsonFile = dirPath + project+'/vis-views.json';
+        let jsonFile = dirPath + adapter.config.visProject+'/vis-views.json';
+   
+    
     if (fs.existsSync(jsonFile)) 
     {
         viewList = Object.keys(JSON.parse(fs.readFileSync(jsonFile, 'utf8')));
         viewList.shift();
         return(viewList);
     } else {
-        adapter.log.error('Cannot find ' + configPath);
+        adapter.log.error('Cannot find ' + dirPath + adapter.config.visProject+'/vis-views.json');
     }
 }
 
@@ -331,7 +333,7 @@ if(nmb[0] == 'vis'){
                 } else {
                     if(timerAutoSV) clearTimeout(timerAutoSV);
                     adapter.setState(switchTimer, 0);
-                    switchToViewImmediate(project+'/'+actualHomeView.val);
+                    switchToViewImmediate(adapter.config.visProject+'/'+actualHomeView.val);
                 }
             } 
             // Standard Views festlegen
@@ -357,7 +359,7 @@ if(nmb[0] == 'vis'){
                         await adapter.setStateAsync('switchTimer', 0);
                         if(actualLockView.val != visData.val.split('/').pop()){
                             await adapter.setStateAsync(switchAutomaticTimer,0);
-                            switchToViewImmediate(project+'/'+actualLockView.val);
+                            switchToViewImmediate(adapter.config.visProject+'/'+actualLockView.val);
                         }
                     }
                 } else {
@@ -375,7 +377,7 @@ if(nmb[0] == 'vis'){
                 await adapter.setStateAsync('switchTimer', 0);
                 if(actualLockView.val != newState.split('/').pop()){
                     await adapter.setStateAsync(switchAutomaticTimer,0);
-                    switchToViewImmediate(project+'/'+actualLockView.val);
+                    switchToViewImmediate(adapter.config.visProject+'/'+actualLockView.val);
                 }
             } else {
                 if(timerTout) clearTimeout(timerTout);
@@ -403,7 +405,6 @@ function switchToViewImmediate(view){
 
 
 
-
 // Switch to configured Homeview
 async function switchToHomeView() {
       try {
@@ -425,7 +426,7 @@ async function switchToHomeView() {
                                  if(timerTout) clearTimeout(timerTout);
                                  await adapter.setStateAsync('switchTimer', 0);
                                  if(actualLockView.val != actualLockView.val.split('/').pop()){
-                                     switchToViewImmediate(project+'/'+actualLockView.val);
+                                     switchToViewImmediate(adapter.config.visProject+'/'+actualLockView.val);
                                  }
                              } else {
                                 await adapter.setStateAsync('switchTimer',timer - 1);
@@ -435,7 +436,7 @@ async function switchToHomeView() {
                              await adapter.setStateAsync('switchTimer', 0);
                              if(visInstance.val == undefined) await adapter.setForeignStateAsync('vis.0.control.instance', 'FFFFFFFF');
 
-                             await adapter.setForeignStateAsync('vis.0.control.data', project + '/' + actualHomeView.val);
+                             await adapter.setForeignStateAsync('vis.0.control.data', adapter.config.visProject + '/' + actualHomeView.val);
                              await adapter.setForeignStateAsync('vis.0.control.command', 'changeView');
 
                          }
@@ -475,7 +476,7 @@ async function autoSwitchView(i){
                         }
                         else{
                             await adapter.setStateAsync('switchTimer', switchAutomaticTimer.val);
-                            if(switchAutomatic.val === true) switchToViewImmediate(project+'/'+viewArr[i]);
+                            if(switchAutomatic.val === true) switchToViewImmediate(adapter.config.visProject+'/'+viewArr[i]);
                             autoSwitchView((i+1));
                         }
                     }, 1000);
@@ -490,7 +491,7 @@ async function autoSwitchView(i){
         } else {
             if(timerAutoSV) clearTimeout(timerAutoSV);
             await adapter.setStateAsync(switchTimer, 0);
-            switchToViewImmediate(project+'/'+actualHomeView.val);
+            switchToViewImmediate(adapter.config.visProject+'/'+actualHomeView.val);
         }
     } catch (error) {
         adapter.log.error(error);
@@ -557,6 +558,8 @@ function generateProjectList(dirPath, viewsJsonFile)
 ////////////////////////////////
 
 async function main() {
+    
+    
     if(readViews()){
        // adapter.log.info(readViews());
         createObjects(readViews());
@@ -570,10 +573,11 @@ async function main() {
     // adapter.config:
     //adapter.log.info('config option1: ' + adapter.config.option1);
     
+
     //adapter.log.info('config VisProjekt: ' + adapter.config.visprojekt);
     //adapter.log.info('Adaptername: ' + adapterName);
     
-    fs.watchFile(dirPath + project+'/vis-views.json', (curr, prev) => {
+    fs.watchFile(dirPath + adapter.config.visProjekt+'/vis-views.json', (curr, prev) => {
         createObjects(readViews());
         deleteVisObjects(readViews());
     });
