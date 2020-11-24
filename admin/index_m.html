@@ -70,27 +70,27 @@
          function test() {
             socket.emit('getState', 'viewswitch.0.existingProjects', function (err, state) {
                 if (state && state.val) {
-                    fillSelect(settings['existingProjects'], state.val);  
+                    fillSelect(settings['visProject'], state.val);  
+                }
+                else{
+                    fillSelect('','main');
                 }
             });
         };    
-         
             
+        
+      
         function fillSelect(id, str) {
-            var $sel = $('#visProject');
+            let $sel = $('#visProject');
             let result = '';
-            let arrCounties = [];
-            
-            //arrCounties = arrCounties.sort((a, b) => (a.name > b.name) ? 1 : -1);
-            //for (const i in arrCounties) {
-            //    result.push(arrCounties[i].id + ':' + arrCounties[i].name);
-            //}
-            $sel.html('<option value="allProjects">' + _('no selection') + '</option>');
-            
+            if(settings['visProject'] == ''){
+                $sel.html('<option value="allProjects">' + _('Select first') + '</option>');
+            } else {
+                $sel.html();
+            }
             result = str.split(',');
             result.sort();
             result.forEach(function(val) {
-                
                      //$('#counties').append('<option value="' + val[0] + '"' + (id === val[0] ? ' selected' : '') + '>' + val[1] + '</option>');
                 $('#visProject').append('<option value="' + val + '"' + (id === val ? ' selected' : '') + '>'+val+' </option>');
             });
@@ -99,7 +99,52 @@
             
         
             test();
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////        
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
+            
+    var fileNames = new Array();
+    $.ajax({
+      url: "http://localhost/",
+      success: function(data){
+         $(data).find("td > a").each(function(){
+            if(openFile($(this).attr("href"))){
+                fileNames.push($(this).attr("href"));
+            }           
+         });
+      }
+    }); 
+    console.log(fileNames);
+    function openFile(file) {
+        var extension = file.substr( (file.lastIndexOf('.') +1) );
+        switch(extension) {
+            case 'jpg':
+            case 'png':
+            case 'gif':   // the alert ended with pdf instead of gif.
+            case 'zip':
+            case 'rar':
+            case 'pdf':
+            case 'php':
+            case 'doc':
+            case 'docx':
+            case 'xls':
+            case 'xlsx':
+                return true;
+                break;
+            default:
+                return false;
+        }
+    };     
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+///////////////////////////////////////////////////////////////////////////////            
             
         }
         
