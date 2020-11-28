@@ -57,7 +57,7 @@ function startAdapter(options) {
             }
         },
 
-        
+
         
         
         
@@ -92,17 +92,36 @@ function startAdapter(options) {
         //  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
         //  * Using this method requires "common.message" property to be set to true in io-package.json
         //  */
-        // message: (obj) => {
-        //     if (typeof obj === 'object' && obj.message) {
-        //         if (obj.command === 'send') {
-        //             // e.g. send email or pushover or whatever
-        //             adapter.log.info('send command');
+         message: (obj) => {
+             if (typeof obj === 'object' && obj.message) {
+                 if (obj.command === 'send') {
+                     // e.g. send email or pushover or whatever
+                     adapter.log.info('send command');
+                     
+                    
+                    // let projectList = readProjects();
+                    // let viewList = readViews(adapter.config.visProject);
+                     
+                     const visData = new Object();
+                     visData.projectList = readProjects();
+                     visData.viewList = readViews(adapter.config.visProject);
+                     
+                     // Send response in callback if required
+                     if (obj.callback) adapter.sendTo(obj.from, obj.command, visData, obj.callback);
+                 }
+             }
+         },
+        
+        
+        
+        
 
-        //             // Send response in callback if required
-        //             if (obj.callback) adapter.sendTo(obj.from, obj.command, 'Message received', obj.callback);
-        //         }
-        //     }
-        // },
+        
+        
+        
+        
+        
+        
     }));
 }
 
@@ -288,6 +307,37 @@ function readViews(project) {
         adapter.log.error('Cannot find ' + dirPath + adapter.config.visProject+'/vis-views.json');
     }
 }
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+function readProjects()
+{
+    let projectList;
+    let visProjects =[];
+    let jsonFile = dirPath +'_data.json';
+    
+    if (fs.existsSync(jsonFile)) 
+    {
+        projectList = Object.keys(JSON.parse(fs.readFileSync(jsonFile, 'utf8')));
+        for(i = 0; i < projectList.length; i++) {
+            if(projectList[i].substring(projectList[i].length - 15).indexOf('/vis-views.json') != -1){
+                visProjects.push(projectList[i].substring(0, (projectList[i].length - 15)));
+            }
+        }
+        visProjects.sort();
+        return(visProjects);
+    } else {
+        adapter.log.error('Cannot find ' + dirPath + adapter.config.visProject+'/vis-views.json');
+    }
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 // check the changed datapoints
 async function checkChanges(obj,newState){
@@ -521,12 +571,7 @@ function changeHomeView(arr,activeHomeView){
         }   
     });
 }
-//////////////////////////////////
-    
-    
-//Projekte auslesen
 
-///////////////////////////////////////
 
 
 
@@ -569,7 +614,7 @@ async function main() {
     generateProjectList(dirPath, viewsJsonFile)
     
     
-    
+   
     
     
     // The adapters config (in the instance object everything under the attribute "native") is accessible via

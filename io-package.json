@@ -57,6 +57,9 @@
         "loglevel": "info",
         "mode": "daemon",
         "type": "visualization",
+        "messagebox": true,
+
+        "subscribe": "messagebox",
         "compact": true,
         "materialize": true,
         "materializeTab": true,

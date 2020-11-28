@@ -17,6 +17,7 @@
     <link rel="stylesheet" type="text/css" href="style.css" />
     <script type="text/javascript" src="words.js"></script>
 
+
     <script type="text/javascript">
         /*
         Um einen Dialog zu öffnen
@@ -56,97 +57,62 @@
             // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
             if (M) M.updateTextFields();
         
-        /*
-        
-            let visProjects = '<option value="undefined" class="translate">Platzhalter</option>';
-            visProjects += '<option value="Wandtablet" class="translate">Wandtablet</option>';
-            visProjects += '<option value="main" class="translate">main</option>';
-            $('#visProjects').html(visProjects);
-          */  
+                
+    
  
-    /////////////////////////////////////////////////////////////////////7
-            
-            
-         function test() {
-            socket.emit('getState', 'viewswitch.0.existingProjects', function (err, state) {
-                if (state && state.val) {
-                    fillSelect(settings['visProject'], state.val);  
-                }
-                else{
-                    fillSelect('','main');
-                }
-            });
-        };    
-            
-        
-      
-        function fillSelect(id, str) {
-            let $sel = $('#visProject');
-            let result = '';
-            if(settings['visProject'] == ''){
-                $sel.html('<option value="allProjects">' + _('Select first') + '</option>');
-            } else {
-                $sel.html();
+//////////////////////////////////////////////////////////////////////////////////
+
+
+            async function getVisContent() {
+                return new Promise(function (resolve, reject) {
+                    const mObj = new Object();
+                          mObj.command = 'send';
+                          mObj.message = 'getVisData';
+
+                    sendTo('viewswitch.0', 'send', mObj, (visData) => {
+                        if(visData.error) {
+                            reject('Error: ' + visData.error);
+                        } else {
+                            resolve(visData);
+                        }
+                    });
+                });
             }
-            result = str.split(',');
-            result.sort();
-            result.forEach(function(val) {
-                     //$('#counties').append('<option value="' + val[0] + '"' + (id === val[0] ? ' selected' : '') + '>' + val[1] + '</option>');
-                $('#visProject').append('<option value="' + val + '"' + (id === val ? ' selected' : '') + '>'+val+' </option>');
-            });
-            $sel.select();
-        }   
+
+
+
+
+
+            async function fillSelect() {
+                let id;
+                let $sel = $('#visProject');
+                let result = '';
+                const visData = await getVisContent();
+                const visDataProjects = visData.projectList;
+                let arr = []
+                if(visData.projectList ==''){
+                    arr.push['main'];
+                } else {
+                   arr = visData.projectList;
+                }
+                if(!settings['visProject']){
+                    $sel.html('<option value="allProjects">' + _('Select first') + '</option>');
+                } else {
+                    $sel.html();
+                    id = settings['visProject'];
+                }
+                arr.sort();
+                arr.forEach(function(val) {
+                         //$('#counties').append('<option value="' + val[0] + '"' + (id === val[0] ? ' selected' : '') + '>' + val[1] + '</option>');
+                    $('#visProject').append('<option value="' + val + '"' + (id === val ? ' selected' : '') + '>'+val+' </option>');
+                });
+                $sel.select();
+            } 
+
+            fillSelect();
             
-        
-            test();
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////  
-            
-    var fileNames = new Array();
-    $.ajax({
-      url: "http://localhost/",
-      success: function(data){
-         $(data).find("td > a").each(function(){
-            if(openFile($(this).attr("href"))){
-                fileNames.push($(this).attr("href"));
-            }           
-         });
-      }
-    }); 
-    console.log(fileNames);
-    function openFile(file) {
-        var extension = file.substr( (file.lastIndexOf('.') +1) );
-        switch(extension) {
-            case 'jpg':
-            case 'png':
-            case 'gif':   // the alert ended with pdf instead of gif.
-            case 'zip':
-            case 'rar':
-            case 'pdf':
-            case 'php':
-            case 'doc':
-            case 'docx':
-            case 'xls':
-            case 'xlsx':
-                return true;
-                break;
-            default:
-                return false;
-        }
-    };     
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-///////////////////////////////////////////////////////////////////////////////            
-            
-        }
+///////////////////////////////////////////////////////////////////////////////////////
+    }
         
        
         // This will be called by the admin adapter when the user presses the save button
