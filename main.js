@@ -313,8 +313,7 @@ function readViews(project) {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-function readProjects()
-{
+function readProjects(){
     let projectList;
     let visProjects =[];
     let jsonFile = dirPath +'_data.json';

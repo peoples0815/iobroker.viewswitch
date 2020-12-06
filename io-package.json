@@ -16,18 +16,18 @@
                 "zh-cn": "首次出版"
             }
         },
-        "title": "SwitchView",
+        "title": "ViewSwitch",
         "titleLang": {
-            "en": "SwitchView",
-            "de": "SwitchView",
-            "ru": "SwitchView",
-            "pt": "SwitchView",
-            "nl": "SwitchView",
-            "fr": "SwitchView",
-            "it": "SwitchView",
-            "es": "SwitchView",
-            "pl": "SwitchView",
-            "zh-cn": "SwitchView"
+            "en": "ViewSwitch",
+            "de": "ViewSwitch",
+            "ru": "ViewSwitch",
+            "pt": "ViewSwitch",
+            "nl": "ViewSwitch",
+            "fr": "ViewSwitch",
+            "it": "ViewSwitch",
+            "es": "ViewSwitch",
+            "pl": "ViewSwitch",
+            "zh-cn": "ViewSwitch"
         },
         "desc": {
             "en": "This Adapter allows you to switch your existing Views automaticly",
@@ -88,8 +88,6 @@
         ]
     },
     "native": {
-        "option1": true,
-        "option2": "42",
         "visProject":""
     },
     "objects": [],
