@@ -59,8 +59,9 @@
                 
 //////////////////////////////////////////////////////////////////////////////////
             //View-Liste aktuallisieren
-            $('#visProject').on('change', function () {
+         /*   $('#visProject').on('change', function () {
            //    genViewList();
+                 $('.tab_views').hide();
             });
  
 //////////////////////////////////////////////////////////////////////////////////
@@ -68,22 +69,22 @@
                 if ($('#notificationEnabled').prop('checked')) {
                 $('.tab-notification').show();
                 } else {
-                    $('.tab-notification').hide();
+                    $('.tab_views').hide();
                 }
             }
 
             //showHideElements();
-
+*/
             
             
             
             async function getVisContent() {
-                return new Promise(function (resolve, reject) {
+                return new Promise(async function (resolve, reject) {
                     const mObj = new Object();
                           mObj.command = 'send';
                           mObj.message = 'getVisData';
 
-                    sendTo('viewswitch.0', 'send', mObj, (visData) => {
+                   await sendTo('viewswitch.0', 'send', mObj, (visData) => {
                         if(visData.error) {
                             reject('Error: ' + visData.error);
                         } else {
@@ -98,29 +99,34 @@
 
 
             async function genProjectSelect() {
-                let id;
-                let $sel = $('#visProject');
-                let result = '';
-                const visData = await getVisContent();
-                const visDataProjects = visData.projectList;
-                let arr = [];
-                if(visData.projectList ==''){
-                    arr.push['main'];
-                } else {
-                   arr = visData.projectList;
-                }
-                if(!settings['visProject']){
-                    $sel.html('<option value="allProjects">' + _('Select first') + '</option>');
-                } else {
-                    $sel.html();
-                    id = settings['visProject'];
-                }
-                arr.sort();
-                arr.forEach(function(val) {
-                         //$('#counties').append('<option value="' + val[0] + '"' + (id === val[0] ? ' selected' : '') + '>' + val[1] + '</option>');
-                    $('#visProject').append('<option value="' + val + '"' + (id === val ? ' selected' : '') + '>'+val+' </option>');
-                });
-                $sel.select();
+                try{
+                    let id;
+                    let $sel = $('#visProject');
+                    let result = '';
+                    const visData = await getVisContent();
+                    const visDataProjects = visData.projectList;
+                    let arr = [];
+                    if(visData.projectList ==''){
+                        arr.push['main'];
+                    } else {
+                       arr = visData.projectList;
+                    }
+                    if(!settings['visProject'] || settings['visProject'] == ''){
+                        $sel.html('<option value="allProjects">' + _('Select first') + '</option>');
+                    } else {
+                        $sel.html();
+                        id = settings['visProject'];
+                    }
+                    arr.sort();
+                    arr.forEach(function(val) {
+                             //$('#counties').append('<option value="' + val[0] + '"' + (id === val[0] ? ' selected' : '') + '>' + val[1] + '</option>');
+                        $('#visProject').append('<option value="' + val + '"' + (id === val ? ' selected' : '') + '>'+val+' </option>');
+                    });
+                    $sel.select();
+                }catch(e) {
+                    console.log(e); // 30
+                  }
+                
             } 
 
             genProjectSelect();
@@ -188,7 +194,7 @@
             
             } 
 
-            genViewList()
+            //genViewList()
             
 
             
